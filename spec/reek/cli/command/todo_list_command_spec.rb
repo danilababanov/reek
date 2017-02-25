@@ -19,7 +19,7 @@ RSpec.describe Reek::CLI::Command::TodoListCommand do
 
     before do
       $stdout = StringIO.new
-      allow(File).to receive(:write)
+      allow(File).to receive(:write).with(described_class::FILE_NAME, String)
     end
 
     after do
