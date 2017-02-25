@@ -9,10 +9,11 @@ RSpec.describe Reek::CLI::Command::TodoListCommand do
   describe '#execute' do
     let(:options) { Reek::CLI::Options.new [] }
     let(:configuration) { instance_double 'Reek::Configuration::AppConfiguration' }
+    let(:sources) { [source_file] }
 
     let(:command) do
       described_class.new(options: options,
-                          sources: [],
+                          sources: sources,
                           configuration: configuration)
     end
 
@@ -26,10 +27,7 @@ RSpec.describe Reek::CLI::Command::TodoListCommand do
     end
 
     context 'smells found' do
-      before do
-        smells = [build(:smell_warning, context: 'Foo#bar')]
-        allow(command).to receive(:scan_for_smells).and_return(smells)
-      end
+      let(:source_file) { SMELLY_FILE }
 
       it 'shows a proper message' do
         expected = "\n'.todo.reek' generated! You can now use this as a starting point for your configuration.\n"
@@ -41,36 +39,18 @@ RSpec.describe Reek::CLI::Command::TodoListCommand do
         expect(result).to eq(Reek::CLI::Status::DEFAULT_SUCCESS_EXIT_CODE)
       end
 
-      it 'writes a todo file' do
-        command.execute
-        expected_yaml = { 'FeatureEnvy' => { 'exclude' => ['Foo#bar'] } }.to_yaml
-        expect(File).to have_received(:write).with(described_class::FILE_NAME, expected_yaml)
-      end
-    end
-
-    context 'smells of different types found' do
-      before do
-        smells = [
-          build(:smell_warning, context: 'Foo#bar', smell_detector: nil_check),
-          build(:smell_warning, context: 'Bar#baz', smell_detector: nested_iterators)
-        ]
-        allow(command).to receive(:scan_for_smells).and_return(smells)
-      end
-
-      it 'writes the context into the todo file once' do
+      it 'writes a todo file with exclusions for each smell' do
         command.execute
         expected_yaml = {
-          'NilCheck' => { 'exclude' => ['Foo#bar'] },
-          'NestedIterators' => { 'exclude' => ['Bar#baz'] }
+          'UncommunicativeMethodName' => { 'exclude' => ['Smelly#x'] },
+          'UncommunicativeVariableName' => { 'exclude' => ['Smelly#x'] }
         }.to_yaml
         expect(File).to have_received(:write).with(described_class::FILE_NAME, expected_yaml)
       end
     end
 
     context 'no smells found' do
-      before do
-        allow(command).to receive(:scan_for_smells).and_return []
-      end
+      let(:source_file) { CLEAN_FILE }
 
       it 'shows a proper message' do
         expected = "\n'.todo.reek' not generated because there were no smells found!\n"
