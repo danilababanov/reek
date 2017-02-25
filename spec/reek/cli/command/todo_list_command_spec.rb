@@ -18,12 +18,7 @@ RSpec.describe Reek::CLI::Command::TodoListCommand do
     end
 
     before do
-      $stdout = StringIO.new
       allow(File).to receive(:write).with(described_class::FILE_NAME, String)
-    end
-
-    after do
-      $stdout = STDOUT
     end
 
     context 'smells found' do
@@ -35,12 +30,12 @@ RSpec.describe Reek::CLI::Command::TodoListCommand do
       end
 
       it 'returns a success code' do
-        result = command.execute
+        result = Reek::CLI::Silencer.silently { command.execute }
         expect(result).to eq(Reek::CLI::Status::DEFAULT_SUCCESS_EXIT_CODE)
       end
 
       it 'writes a todo file with exclusions for each smell' do
-        command.execute
+        Reek::CLI::Silencer.silently { command.execute }
         expected_yaml = {
           'UncommunicativeMethodName' => { 'exclude' => ['Smelly#x'] },
           'UncommunicativeVariableName' => { 'exclude' => ['Smelly#x'] }
@@ -58,12 +53,12 @@ RSpec.describe Reek::CLI::Command::TodoListCommand do
       end
 
       it 'returns a success code' do
-        result = command.execute
+        result = Reek::CLI::Silencer.silently { command.execute }
         expect(result).to eq Reek::CLI::Status::DEFAULT_SUCCESS_EXIT_CODE
       end
 
       it 'does not write a todo file' do
-        command.execute
+        Reek::CLI::Silencer.silently { command.execute }
         expect(File).not_to have_received(:write)
       end
     end
